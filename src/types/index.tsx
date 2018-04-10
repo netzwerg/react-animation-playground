@@ -2,7 +2,9 @@ export type RootState = {
     readonly item: Item;
 };
 
+export type ItemId = string;
+
 export type Item = {
-    readonly id: string;
+    readonly id: ItemId;
     readonly step: number;
 };

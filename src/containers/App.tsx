@@ -20,4 +20,4 @@ const mapDispatchToProps = (dispatch: Dispatch<actions.RootAction>): DispatchPro
     return {dispatch};
 };
 
-export default connect(mapStateToProps, mapDispatchToProps)(App);
+export default connect<StateProps>(mapStateToProps, mapDispatchToProps)(App);
