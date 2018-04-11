@@ -7,13 +7,13 @@ import { Provider } from 'react-redux';
 import { reducer } from './reducers';
 import { applyMiddleware, createStore } from 'redux';
 import { updateItem } from './actions';
-import { stepCount } from './constants';
 import App from './containers/App';
 
 const initialState = {
     item: {
         id: 'demo-item',
-        step: 0
+        row: 0,
+        column: 0
     }
 };
 
@@ -25,9 +25,43 @@ const store = createStore<RootState>(
     applyMiddleware(logger)
 );
 
+let itemStateIndex = 0;
+
 setInterval(() => {
-    const currentItem = store.getState().item;
-    const newItem = {...currentItem, step: (currentItem.step + 1) % stepCount};
+    const itemStates = [
+        {
+            id: 'demo-item',
+            row: 0,
+            column: 0
+        },
+        {
+            id: 'demo-item',
+            row: 0,
+            column: 1
+        },
+        {
+            id: 'demo-item',
+            row: 0,
+            column: 2
+        },
+        {
+            id: 'demo-item',
+            row: 1,
+            column: 0
+        },
+        {
+            id: 'demo-item',
+            row: 1,
+            column: 1
+        },
+        {
+            id: 'demo-item',
+            row: 1,
+            column: 2
+        }
+    ];
+
+    const newItem = itemStates[itemStateIndex++ % itemStates.length];
     store.dispatch(updateItem(newItem));
 },          1000);
 

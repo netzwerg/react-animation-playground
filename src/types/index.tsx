@@ -6,5 +6,6 @@ export type ItemId = string;
 
 export type Item = {
     readonly id: ItemId;
-    readonly step: number;
+    readonly row: number;
+    readonly column: number;
 };
