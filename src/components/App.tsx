@@ -16,6 +16,10 @@ type Coordinate = {
     cy: number
 };
 
+/**
+ * Determines the coordinates of an SVG circle in the coordinate system of the SVG root view port.
+ * See https://www.sitepoint.com/how-to-translate-from-dom-to-svg-coordinates-and-back-again
+ */
 function getCoordinates(svg: SVGSVGElement, circleNode: SVGCircleElement) {
     const point = svg.createSVGPoint();
     const circleClientRect = circleNode.getBoundingClientRect();
@@ -72,6 +76,20 @@ class App extends React.Component<Props> {
         );
     }
 
+    /**
+     * This is where the animation happens (on the real DOM).
+     *
+     * The circle needs to be animated from previous to current coordinates. The problem is, that a circle's coordinates
+     * are expressed relative to its containing <g> element (which often encapsulates an actual React component).
+     * In order for a circle to travel across such component boundaries, the animation has to happen in a global
+     * coordinate system relative to the view port of the svg root (0).
+     *
+     * The DOM already contains a circle at the new position. We clone this circle (1) to get a dedicated element
+     * that we animate in global coordinates. We thus need to attach the clone directly to the root (2).
+     *
+     * During the animation, we only want to show the animated circle and thus temporarily hide the real one (3).
+     * At the end of the animation, we get rid of the animated circle (5) and un-hide the current one (6).
+     */
     componentDidUpdate() {
 
         const svgRootNode = ReactDOM.findDOMNode(this).getElementsByTagName('svg').item(0) as SVGSVGElement;
@@ -79,6 +97,7 @@ class App extends React.Component<Props> {
 
         if (circleNode) {
 
+            // (0) Calculate current relative to the global view port
             const currentCoordinates = getCoordinates(svgRootNode, circleNode);
 
             const previousCoordinates = this.coordinateCache.get(circleNode.id) || currentCoordinates;
@@ -87,12 +106,17 @@ class App extends React.Component<Props> {
 
             const easingFunction = currentCoordinates.cy > previousCoordinates.cy ? easeBounceOut : easeCubicInOut;
 
+            // (1) This clone will be used for the animation
             const animatedCircleNode = circleNode.cloneNode(true) as SVGCircleElement;
+
+            // (2) Attach to root element (animated x/y coordinates are in the system of the global view port)
             svgRootNode.appendChild(animatedCircleNode);
 
+            // (3) The DOM already contains the circle at the new position -> hide it until the animation is over
             select(circleNode)
                 .attr('visibility', 'hidden');
 
+            // (4) The actual animation
             select(animatedCircleNode)
                 .attr('visibility', 'visible')
                 .attr('cx', previousCoordinates.cx)
@@ -102,8 +126,9 @@ class App extends React.Component<Props> {
                 .ease(easingFunction)
                 .attr('cx', currentCoordinates.cx)
                 .attr('cy', currentCoordinates.cy)
-                .remove();
+                .remove(); // (5) Detach the animated circle once we're done
 
+            // (6) Once the animation is over, we can again show the new state (already properly placed in the DOM)
             select(circleNode)
                 .transition()
                 .delay(10000)
